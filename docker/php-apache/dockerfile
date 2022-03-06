@@ -1,0 +1,31 @@
+FROM php:8.1-apache-buster
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get -y install \
+        libicu-dev \
+        libzip-dev \
+        libonig-dev \
+        libpq-dev \
+        libfreetype6-dev \
+        libjpeg-dev \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+        zip \
+        unzip \
+        libssl-dev  && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    docker-php-ext-install intl mbstring opcache pdo_mysql zip gd bcmath && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install -j$(nproc) gd exif
+
+COPY php.ini /usr/local/etc/php/
+
+RUN a2enmod rewrite
+
+WORKDIR /var/www/html
